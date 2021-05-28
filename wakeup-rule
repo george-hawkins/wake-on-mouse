@@ -1,0 +1,23 @@
+#!/bin/bash -e
+
+mice=( /dev/input/mouse* )
+
+function error {
+    echo "Error: $*" 1>&2
+    exit 2
+}
+
+count=${#mice[@]}
+[ $count -gt 1 ] && error "expected 1 mouse, found $count"
+
+mouse=${mice[0]}
+
+[[ $mouse != /dev/input/mouse0 ]] && error "/dev/input/mouse0 - no such file"
+
+eval $(udevadm info --name=$mouse --query=property --export)
+
+[[ ! -v ID_VENDOR_ID ]] && error "mouse has no ID_VENDOR_ID"
+[[ ! -v ID_MODEL_ID ]] && error "mouse has no ID_MODEL_ID"
+
+echo "# Udev rule to disable wakeup for ${ID_SERIAL:-mouse0}."
+echo 'ACTION=="bind", ATTRS{idVendor}=="'$ID_VENDOR_ID'", ATTRS{idProduct}=="'$ID_MODEL_ID'", ATTR{power/wakeup}=="*", ATTR{power/wakeup}="disabled"'
