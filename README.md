@@ -68,13 +68,13 @@ It turned out there were two issues:
 
 To find the correct action, I added the following temporary rule to `/etc/udev/rules.d/10-wakeup.rules`:
 
-    ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c52b", ATTR{power/wakeup}=="*" RUN+="/bin/sh -c 'echo $env{DEVPATH} $env{ACTION} >> /tmp/udev-wakeup.log 2>&1'"
+    ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c52b", ATTR{power/wakeup}=="*" RUN+="/bin/sh -c 'echo $(date --rfc-3339=seconds) $env{DEVPATH} $env{ACTION} >> /tmp/udev-wakeup.log 2>&1'"
 
 I.e. a very unconstrained rule, with just checks for the particular device and the `power/wakeup` attribute. Then after plugging the device in and out, I could find the relevant action in `/tmp/udev-wakeup.log`:
 
     $ cat /tmp/wkup 
-    /devices/pci0000:00/0000:00:14.0/usb1/1-7/1-7.1 bind
-    /devices/pci0000:00/0000:00:14.0/usb1/1-7/1-7.1/1-7.1:1.2/0003:046D:C52B.0051/0003:046D:101B.0052/power_supply/hidpp_battery_18 change
+    2021-06-02 09:41:25+02:00 /devices/pci0000:00/0000:00:14.0/usb1/1-7/1-7.1 bind
+    2021-06-02 09:51:05+02:00 /devices/pci0000:00/0000:00:14.0/usb1/1-7/1-7.1/1-7.1:1.2/0003:046D:C52B.0051/0003:046D:101B.0052/power_supply/hidpp_battery_18 change
 
 Note that this also picked up a battery-related child device - but I could see that if I checked for just the `bind` action I would get the device I wanted.
 
@@ -113,3 +113,9 @@ You can also use `udevadm info` with a `/devices` path (like above, i.e. somethi
 Another way to find the relevant USB device, if you have the product ID, is like so:
 
     $ grep c52b /sys/bus/usb/devices/*/idProduct
+
+You can then see if wakeup is enabled for this device like so:
+
+    $ dev=$(fgrep -l c52b /sys/bus/usb/devices/*/idProduct)
+    $ cat ${dev%/*}/power/wakeup
+    enabled
