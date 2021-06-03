@@ -20,4 +20,4 @@ eval $(udevadm info --name=$mouse --query=property --export)
 [[ ! -v ID_MODEL_ID ]] && error "mouse has no ID_MODEL_ID"
 
 echo "# Udev rule to disable wakeup for ${ID_SERIAL:-mouse0}."
-echo 'ACTION=="bind", ATTRS{idVendor}=="'$ID_VENDOR_ID'", ATTRS{idProduct}=="'$ID_MODEL_ID'", ATTR{power/wakeup}=="*", ATTR{power/wakeup}="disabled"'
+echo 'ACTION=="bind" DRIVER=="usbhid" ATTR{bInterfaceProtocol}=="02" ATTRS{idVendor}=="'$ID_VENDOR_ID'" ATTRS{idProduct}=="'$ID_MODEL_ID'" RUN+="/bin/sh -c '\''echo disabled > /sys$env{DEVPATH}/../power/wakeup'\''"'

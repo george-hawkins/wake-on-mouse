@@ -1,0 +1,25 @@
+#!/bin/bash
+
+output=$(mktemp "/tmp/wakeup-full-$(date '+%s%N').XXXXXXXXXX.log")
+exec >> $output
+exec 2>&1
+
+date --rfc-3339=seconds
+env
+
+dev=$(fgrep -l c52b /sys/bus/usb/devices/*/idProduct)
+dev=${dev%/*}/power/wakeup
+if [[ -f $dev ]]
+then
+    echo disabled > $dev
+    echo "$dev $(cat $dev)"
+else
+    echo "no wakeup file"
+fi
+
+devp="/sys/$DEVPATH"
+echo $(readlink -f $devp)
+echo $(readlink -f $devp/device)
+ls -l "$devp/"
+
+echo "====="
